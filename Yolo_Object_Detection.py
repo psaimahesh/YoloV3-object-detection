@@ -1,27 +1,24 @@
 import cv2
 import numpy as np
 
+# load the pre-trained model
 net = cv2.dnn.readNet("yolov3.weights", "yolov3.cfg.txt")
 classes = []
 
+# Make a list of labels
 with open("coco.names.txt", 'r') as names:
      classes = [line.strip() for line in names.readlines()]
 
+# Get layer names in the model
 layer_names = net.getLayerNames()
 output_layers = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
-colors = np.random.uniform(0, 255, (len(classes), 3))
-# print(layer_names)
-# print(len(layer_names))
-# print(net.getUnconnectedOutLayers())
-# print(output_layers)
+colors = np.random.uniform(0, 255, (len(classes), 3))        # To use different colors for each label
 
 def yolo_detection(img):
      height, width, channels = img.shape
      blob = cv2.dnn.blobFromImage(img, scalefactor=0.00392, mean=(0, 0, 0), size=(416, 416), swapRB=True)
-     net.setInput(blob)
+     net.setInput(blob)        # set the input blob to model
      outputs = net.forward(output_layers)
-     # print(len(outputs), len(outputs[0]), len(outputs[1]), len(outputs[2]))
-     # print(len(outputs[0][0]))
      classIds = []
      confidences = []
      boundingBoxes = []
@@ -41,8 +38,8 @@ def yolo_detection(img):
                     boundingBoxes.append([x, y, w, h])
                     confidences.append(float(confidence))
                     # cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+     # To remove the overlapped bounding boxes
      indexes = cv2.dnn.NMSBoxes(boundingBoxes, confidences, 0.5, 0.4)
-     # print(indexes)
      if len(indexes):
           indexes = indexes.reshape((-1))
      for i in indexes:
@@ -52,7 +49,7 @@ def yolo_detection(img):
           cv2.rectangle(img, (x, y), (x + w, y + h), color, 4)
           cv2.putText(img, name, (x, y + 100), cv2.FONT_HERSHEY_COMPLEX, 1, color, 3)
 
-
+# To detect objects in video or real-time webcam
 def Video(path):
      try:
           webcam = cv2.VideoCapture(path)
@@ -72,6 +69,7 @@ def Video(path):
           print("Invalid path")
           return
 
+# To detect objects in Image
 def Image(path):
      try:
           img = cv2.imread(path)
